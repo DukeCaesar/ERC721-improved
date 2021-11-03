@@ -323,7 +323,7 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata {
      *
      * Content hash for a specific content is set when minting the token.
      */
-    function getContentHash(uint256 tokenId) public virtual view returns (bytes32 contentHash){
+    function getContentHash(uint256 tokenId) public virtual returns (bytes32 contentHash){
         require(_exists(tokenId), "ERC721: approved query for nonexistent token");  
 
         return _contentHashes[tokenId];
@@ -334,7 +334,7 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata {
      *
      * If the content hash is different from the value stored in the contract, then the content is not valid.
      */
-    function checkContentValidity(uint256 tokenId, bytes32 contenthash) public virtual view returns (bool) {
+    function checkContentValidity(uint256 tokenId, bytes32 contenthash) public virtual returns (bool) {
         require(_exists(tokenId), "ERC721: approved query for nonexistent token");  
 
         if (_contentHashes[tokenId] == contenthash) {
