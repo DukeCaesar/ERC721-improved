@@ -37,6 +37,9 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata {
     // Mapping from owner to operator approvals
     mapping(address => mapping(address => bool)) private _operatorApprovals;
 
+    // Mapping from token ID to content hash
+    mapping(uint256 => bytes32) private _contentHashes;    
+
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
@@ -244,8 +247,8 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata {
      *
      * Emits a {Transfer} event.
      */
-    function _safeMint(address to, uint256 tokenId) internal virtual {
-        _safeMint(to, tokenId, "");
+    function _safeMint(address to, uint256 tokenId, bytes32 contentHash) internal virtual {
+        _safeMint(to, tokenId, contentHash, "");
     }
 
     /**
@@ -255,9 +258,10 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata {
     function _safeMint(
         address to,
         uint256 tokenId,
+        bytes32 contentHash,
         bytes memory _data
     ) internal virtual {
-        _mint(to, tokenId);
+        _mint(to, tokenId, contentHash);
         require(
             _checkOnERC721Received(address(0), to, tokenId, _data),
             "ERC721: transfer to non ERC721Receiver implementer"
@@ -276,7 +280,7 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata {
      *
      * Emits a {Transfer} event.
      */
-    function _mint(address to, uint256 tokenId) internal virtual {
+    function _mint(address to, uint256 tokenId, bytes32 contentHash) internal virtual {
         require(to != address(0), "ERC721: mint to the zero address");
         require(!_exists(tokenId), "ERC721: token already minted");
 
@@ -284,6 +288,7 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata {
 
         _balances[to] += 1;
         _owners[tokenId] = to;
+        _contentHashes[tokenId] = contentHash;
 
         emit Transfer(address(0), to, tokenId);
     }
@@ -308,8 +313,35 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata {
 
         _balances[owner] -= 1;
         delete _owners[tokenId];
+        delete _contentHashes[tokenId];
 
         emit Transfer(owner, address(0), tokenId);
+    }
+
+    /**
+     * @dev Return the content hash for this token
+     *
+     * Content hash for a specific content is set when minting the token.
+     */
+    function getContentHash(uint256 tokenId) public virtual view returns (bytes32 contentHash){
+        require(_exists(tokenId), "ERC721: approved query for nonexistent token");  
+
+        return _contentHashes[tokenId];
+    }
+
+    /**
+     * @dev Check the validity of the content refering by the tokenId
+     *
+     * If the content hash is different from the value stored in the contract, then the content is not valid.
+     */
+    function checkContentValidity(uint256 tokenId, bytes32 contenthash) public virtual view returns (bool) {
+        require(_exists(tokenId), "ERC721: approved query for nonexistent token");  
+
+        if (_contentHashes[tokenId] == contenthash) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
